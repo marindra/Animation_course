@@ -43,6 +43,6 @@ void main()
   vsOutput.UV = UV;
   boneColors = vec3(0);
 
-  //for (int  i = 0; i < 4; i++)
-  //  boneColors += get_random_color(BoneIndex[i]) * BoneWeights[i];
+  for (int  i = 0; i < 4; i++)
+    boneColors += get_random_color(BoneIndex[i]) * BoneWeights[i];
 }

@@ -113,7 +113,7 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
   for (size_t i = 0; i < character.mesh->bones.size(); ++i)
   {
     const auto &bone = character.mesh->bones[i];
-    draw_arrow(character.mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), get_random_color(i), 0.01f);
+    draw_arrow(character.mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), vec3(0, 0.3f, 0.5f), 0.01f);
   }
 
 }
