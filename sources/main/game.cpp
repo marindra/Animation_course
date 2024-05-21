@@ -4,6 +4,7 @@
 #include <render/mesh.h>
 #include "camera.h"
 #include <application.h>
+#include <render/debug_arrow.h>
 
 struct UserCamera
 {
@@ -30,6 +31,17 @@ struct Scene
 };
 
 static std::unique_ptr<Scene> scene;
+
+vec3 get_random_color(uint x)
+{
+  x += 1u;
+  vec3 col = vec3(1.61803398875);
+  col = fract(col) * vec3(x,x,x);
+  col = fract(col) * vec3(1,x,x);
+  col = fract(col) * vec3(1,1,x);
+  //col = vec3(phi*i, phi*i*i, phi*i*i*i); // has precision issues
+  return fract(col);
+}
 
 void game_init()
 {
@@ -67,6 +79,9 @@ void game_init()
     load_mesh("resources/MotusMan_v55/MotusMan_v55.fbx", 0),
     std::move(material)
   });
+
+  create_arrow_render();
+
   std::fflush(stdout);
 }
 
@@ -94,6 +109,13 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
   shader.set_vec3("SunLight", light.lightColor);
 
   render(character.mesh);
+
+  for (size_t i = 0; i < character.mesh->bones.size(); ++i)
+  {
+    const auto &bone = character.mesh->bones[i];
+    draw_arrow(character.mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), get_random_color(i), 0.01f);
+  }
+
 }
 
 void game_render()
@@ -111,4 +133,6 @@ void game_render()
 
   for (const Character &character : scene->characters)
     render_character(character, projView, glm::vec3(transform[3]), scene->light);
+  
+  render_arrows(projView, glm::vec3(transform[3]), scene->light);
 }
