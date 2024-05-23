@@ -183,7 +183,9 @@ MeshPtr load_mesh(const char *path, int idx)
     return nullptr;
   }
 
-  return create_mesh(scene->mMeshes[idx]);
+  MeshPtr result = create_mesh(scene->mMeshes[idx]);
+  importer.FreeScene();
+  return result;
 }
 
 void render(const MeshPtr &mesh)

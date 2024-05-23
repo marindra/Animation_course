@@ -5,6 +5,7 @@
 #include "camera.h"
 #include <application.h>
 #include <render/debug_arrow.h>
+#include "scene.h"
 
 struct UserCamera
 {
@@ -16,8 +17,10 @@ struct UserCamera
 struct Character
 {
   glm::mat4 transform;
-  MeshPtr mesh;
+  // MeshPtr mesh;
   MaterialPtr material;
+  // SkeletonPtr skeleton;
+  SceneAssetPtr fullObject;
 };
 
 struct Scene
@@ -76,8 +79,9 @@ void game_init()
 
   scene->characters.emplace_back(Character{
     glm::identity<glm::mat4>(),
-    load_mesh("resources/MotusMan_v55/MotusMan_v55.fbx", 0),
-    std::move(material)
+    //load_mesh("resources/MotusMan_v55/MotusMan_v55.fbx", 0),
+    std::move(material),
+    makeScene("resources/MotusMan_v55/MotusMan_v55.fbx", 0)
   });
 
   create_arrow_render();
@@ -108,12 +112,22 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
   shader.set_vec3("AmbientLight", light.ambient);
   shader.set_vec3("SunLight", light.lightColor);
 
-  render(character.mesh);
+  render(character.fullObject->mesh); //character.mesh);
 
-  for (size_t i = 0; i < character.mesh->bones.size(); ++i)
+  for (size_t i = 0; i < character.fullObject->mesh->bones.size(); ++i)
   {
-    const auto &bone = character.mesh->bones[i];
-    draw_arrow(character.mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), vec3(0, 0.3f, 0.5f), 0.01f);
+    const auto &bone = character.fullObject->mesh->bones[i];
+    draw_arrow(character.fullObject->mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), vec3(0, 0.5f, 0.3f), 0.01f);
+  }
+
+  for (int i = 0; i < character.fullObject->skeleton->totalNodeCount; ++i)
+  {
+    int parentIdx = character.fullObject->skeleton->parentInd[i];
+    if (parentIdx >= 0)
+    {
+      draw_arrow(character.fullObject->skeleton->globalTm[parentIdx] * vec4(0, 0, 0, 1),\
+      character.fullObject->skeleton->globalTm[i] * vec4(0, 0, 0, 1), vec3(0, 0.3f, 0.5f), 0.01f);
+    }
   }
 
 }

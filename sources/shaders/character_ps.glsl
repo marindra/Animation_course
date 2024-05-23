@@ -41,6 +41,6 @@ void main()
   float metallness = 0.4;
   vec3 color = texture(mainTex, vsOutput.UV).rgb ;
   color = LightedColor(color, shininess, metallness, vsOutput.WorldPosition, vsOutput.EyespaceNormal, LightDirection, CameraPosition);
-  color = boneColors;
+  //color = boneColors;
   FragColor = vec4(color, 1.0);
 }
