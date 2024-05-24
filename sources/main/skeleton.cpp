@@ -27,13 +27,13 @@ SkeletonPtr makeSkeleton(const aiNode* curNode)
   Skeleton skeleton;
   iterate_over_tree(-1, curNode, skeleton);
   skeleton.globalTm = std::vector<glm::mat4>(skeleton.totalNodeCount + 1, glm::mat4(1.f));
-  skeleton.UpdateTransform();
+  //skeleton.UpdateTransform();
   return std::make_shared<Skeleton>(std::move(skeleton));
 }
 
 void Skeleton::UpdateTransform()
 {
-  for (size_t i = 0; i < this->totalNodeCount; ++i)
+  for (int i = 0; i < this->totalNodeCount; ++i)
   {
     int parent = this->parentInd[i];
     globalTm[i] = (parent >= 0 ? globalTm[parent] : glm::mat4(1.f)) * localTm[i];

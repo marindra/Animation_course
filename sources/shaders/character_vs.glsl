@@ -7,6 +7,8 @@ struct VsOutput
   vec2 UV;
 };
 
+const int N = 128;
+uniform mat4 Bones[N];
 uniform mat4 Transform;
 uniform mat4 ViewProjection;
 

@@ -34,15 +34,15 @@ struct DebugArrow
     std::vector<uint> indices;
     std::vector<vec3> vert;
     std::vector<vec3> normal;
-    vec3 c = vec3(0, 1, 0);
+    vec3 c = vec3(1, 0, 0);
     const int N = 4;
     vec3 p[N];
     for (int i = 0; i < N; i++)
     {
       float a1 = ((float)(i) / N) * 2 * PI;
       float a2 = ((float)(i + 1) / N) * 2 * PI;
-      vec3 p1 = p[i] = vec3(cos(a1), 0, sin(a1));
-      vec3 p2 = vec3(cos(a2), 0, sin(a2));
+      vec3 p1 = p[i] = vec3(0, cos(a1), sin(a1));
+      vec3 p2 = vec3(0, cos(a2), sin(a2));
       add_triangle(p2, p1, c, indices, vert, normal);
     }
 
@@ -74,9 +74,9 @@ static void add_arrow(DebugArrow &renderer, const vec3 &from, const vec3 &to, ve
   float len = length(d);
   if (len < 0.01f)
     return;
-  mat4 s = scale(mat4(1.f), vec3(size, len, size));
+  mat4 s = scale(mat4(1.f), vec3(len, size, size));
 
-  mat4 r = directionMatrix(vec3(0, 1, 0), d);
+  mat4 r = directionMatrix(vec3(1, 0, 0), d);
   renderer.instancesTm.emplace_back(t * r * s);
   renderer.instancesColor.emplace_back(vec4(color, 1.f));
 }

@@ -6,6 +6,8 @@
 #include <application.h>
 #include <render/debug_arrow.h>
 #include "scene.h"
+#include <imgui/imgui.h>
+#include "ImGuizmo.h"
 
 struct UserCamera
 {
@@ -98,6 +100,91 @@ void game_update()
     get_delta_time());
 }
 
+void render_imguizmo(ImGuizmo::OPERATION &mCurrentGizmoOperation, ImGuizmo::MODE &mCurrentGizmoMode)
+{
+  if (ImGui::Begin("gizmo window"))
+  {
+    if (ImGui::IsKeyPressed('Z'))
+      mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+    if (ImGui::IsKeyPressed('E'))
+      mCurrentGizmoOperation = ImGuizmo::ROTATE;
+    if (ImGui::IsKeyPressed('R')) // r Key
+      mCurrentGizmoOperation = ImGuizmo::SCALE;
+    if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+      mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+      mCurrentGizmoOperation = ImGuizmo::ROTATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+      mCurrentGizmoOperation = ImGuizmo::SCALE;
+
+    if (mCurrentGizmoOperation != ImGuizmo::SCALE)
+    {
+      if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+        mCurrentGizmoMode = ImGuizmo::LOCAL;
+      ImGui::SameLine();
+      if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+        mCurrentGizmoMode = ImGuizmo::WORLD;
+    }
+  }
+  ImGui::End();
+}
+
+void imgui_render()
+{
+  ImGuizmo::BeginFrame();
+  static size_t idx = 3;
+  for (Character &character : scene->characters)
+  {
+    //character.skeleton.updateLocalTransforms();
+    character.fullObject->skeleton->UpdateTransform();
+    //const RuntimeSkeleton &skeleton = character.skeleton;
+    if (ImGui::Begin("Skeleton view"))
+    {
+      for (const auto& elem : character.fullObject->skeleton->mapOfNameInd)
+      {
+        ImGui::Text("%d) %s", elem.second, elem.first.c_str());
+        ImGui::SameLine();
+        ImGui::PushID(elem.second);
+        if (ImGui::Button("edit"))
+        {
+          idx = elem.second;
+        }
+        ImGui::PopID();
+      }
+      //for (size_t i = 0; i < nodeCount; i++)
+      //{
+      //  ImGui::Text("%d) %s", int(i), skeleton.ref->names[i].c_str());
+      //}
+    }
+    ImGui::End();
+
+    static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
+    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+    render_imguizmo(mCurrentGizmoOperation, mCurrentGizmoMode);
+
+    const glm::mat4 &projection = scene->userCamera.projection;
+    const glm::mat4 &transform = scene->userCamera.transform;
+    mat4 cameraView = inverse(transform);
+ 
+    ImGuiIO &io = ImGui::GetIO();
+    ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+
+    glm::mat4 globNodeTm = character.fullObject->skeleton->globalTm[idx]; //character.skeleton.globalTm[idx];
+
+    ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(projection), mCurrentGizmoOperation, mCurrentGizmoMode,
+                         glm::value_ptr(globNodeTm));
+
+    int parent = character.fullObject->skeleton->parentInd[idx]; //skeleton.ref->parent[idx];
+    //character.skeleton.localTm[idx] = glm::inverse(parent >= 0 ? character.skeleton.globalTm[parent] : glm::mat4(1.f)) * globNodeTm;
+    character.fullObject->skeleton->localTm[idx] = glm::inverse(parent >= 0 ? character.fullObject->skeleton->globalTm[parent] :\
+      glm::mat4(1.f)) * globNodeTm;
+
+    break;
+  }
+}
+
 void render_character(const Character &character, const mat4 &cameraProjView, vec3 cameraPosition, const DirectionLight &light)
 {
   const Material &material = *character.material;
@@ -105,6 +192,7 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
 
   shader.use();
   material.bind_uniforms_to_shader();
+  //shader.set_mat4x4("Bones", {});
   shader.set_mat4x4("Transform", character.transform);
   shader.set_mat4x4("ViewProjection", cameraProjView);
   shader.set_vec3("CameraPosition", cameraPosition);
@@ -114,19 +202,27 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
 
   render(character.fullObject->mesh); //character.mesh);
 
-  for (size_t i = 0; i < character.fullObject->mesh->bones.size(); ++i)
-  {
-    const auto &bone = character.fullObject->mesh->bones[i];
-    draw_arrow(character.fullObject->mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), vec3(0, 0.5f, 0.3f), 0.01f);
-  }
+  //for (size_t i = 0; i < character.fullObject->mesh->bones.size(); ++i)
+  //{
+    //const auto &bone = character.fullObject->mesh->bones[i];
+    //draw_arrow(character.fullObject->mesh->bones[bone.parentId].bindPose * vec4(0, 0, 0, 1), bone.bindPose * vec4(0, 0, 0, 1), vec3(0, 0.5f, 0.3f), 0.01f);
+
+    //if (character.fullObject->mesh->bones[bone.parentId].bindPose != character.fullObject->skeleton->globalTm[\
+    //character.fullObject->skeleton->mapOfNameInd[character.fullObject->mesh->bones[bone.parentId].name]])
+    //{
+    //  printf("Differences in position: %s\n", character.fullObject->mesh->bones[bone.parentId].name.c_str());
+    //}
+  //}
+  //printf("\n\n");
 
   for (int i = 0; i < character.fullObject->skeleton->totalNodeCount; ++i)
   {
     int parentIdx = character.fullObject->skeleton->parentInd[i];
+    assert(parentIdx < i);
     if (parentIdx >= 0)
     {
-      draw_arrow(character.fullObject->skeleton->globalTm[parentIdx] * vec4(0, 0, 0, 1),\
-      character.fullObject->skeleton->globalTm[i] * vec4(0, 0, 0, 1), vec3(0, 0.3f, 0.5f), 0.01f);
+      draw_arrow(character.fullObject->skeleton->globalTm[parentIdx][3],\
+      character.fullObject->skeleton->globalTm[i][3], /*vec3(0, 0.3f, 0.5f)*/get_random_color(i), 0.01f);
     }
   }
 
