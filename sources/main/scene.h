@@ -7,7 +7,8 @@
 struct SceneAsset
 {
   MeshPtr mesh;
-  SkeletonPtr skeleton;
+  //SkeletonPtr skeleton;
+  RuntimeSkeleton skeleton;
 };
 
 using SceneAssetPtr = std::shared_ptr<SceneAsset>;

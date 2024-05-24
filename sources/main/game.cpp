@@ -138,11 +138,11 @@ void imgui_render()
   for (Character &character : scene->characters)
   {
     //character.skeleton.updateLocalTransforms();
-    character.fullObject->skeleton->UpdateTransform();
+    character.fullObject->skeleton.updateLocalTransforms();
     //const RuntimeSkeleton &skeleton = character.skeleton;
     if (ImGui::Begin("Skeleton view"))
     {
-      for (const auto& elem : character.fullObject->skeleton->mapOfNameInd)
+      for (const auto& elem : character.fullObject->skeleton.baseSkeleton->mapOfNameInd)
       {
         ImGui::Text("%d) %s", elem.second, elem.first.c_str());
         ImGui::SameLine();
@@ -171,14 +171,14 @@ void imgui_render()
     ImGuiIO &io = ImGui::GetIO();
     ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 
-    glm::mat4 globNodeTm = character.fullObject->skeleton->globalTm[idx]; //character.skeleton.globalTm[idx];
+    glm::mat4 globNodeTm = character.fullObject->skeleton.globalTm[idx]; //character.skeleton.globalTm[idx];
 
     ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(projection), mCurrentGizmoOperation, mCurrentGizmoMode,
                          glm::value_ptr(globNodeTm));
 
-    int parent = character.fullObject->skeleton->parentInd[idx]; //skeleton.ref->parent[idx];
+    int parent = character.fullObject->skeleton.baseSkeleton->parentInd[idx]; //skeleton.ref->parent[idx];
     //character.skeleton.localTm[idx] = glm::inverse(parent >= 0 ? character.skeleton.globalTm[parent] : glm::mat4(1.f)) * globNodeTm;
-    character.fullObject->skeleton->localTm[idx] = glm::inverse(parent >= 0 ? character.fullObject->skeleton->globalTm[parent] :\
+    character.fullObject->skeleton.localTm[idx] = glm::inverse(parent >= 0 ? character.fullObject->skeleton.globalTm[parent] :\
       glm::mat4(1.f)) * globNodeTm;
 
     break;
@@ -218,27 +218,27 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
   //}
   //printf("\n\n");
 
-  for (int i = 0; i < character.fullObject->skeleton->totalNodeCount; ++i)
+  for (int i = 0; i < character.fullObject->skeleton.baseSkeleton->totalNodeCount; ++i)
   {
-    const auto& it = character.fullObject->mesh->mapOfNameInd.find(character.fullObject->skeleton->names[i]);
+    const auto& it = character.fullObject->mesh->mapOfNameInd.find(character.fullObject->skeleton.baseSkeleton->names[i]);
     if (it != character.fullObject->mesh->mapOfNameInd.end())
     {
       int boneIdx = it->second;
-      bones[boneIdx] = character.fullObject->skeleton->globalTm[i] * character.fullObject->mesh->invBindPoses[boneIdx];
+      bones[boneIdx] = character.fullObject->skeleton.globalTm[i] * character.fullObject->mesh->invBindPoses[boneIdx];
     }
   }
   shader.set_mat4x4("Bones", bones);
 
   render(character.fullObject->mesh);
 
-  for (int i = 0; i < character.fullObject->skeleton->totalNodeCount; ++i)
+  for (int i = 0; i < character.fullObject->skeleton.baseSkeleton->totalNodeCount; ++i)
   {
-    int parentIdx = character.fullObject->skeleton->parentInd[i];
+    int parentIdx = character.fullObject->skeleton.baseSkeleton->parentInd[i];
     assert(parentIdx < i);
     if (parentIdx >= 0)
     {
-      draw_arrow(character.fullObject->skeleton->globalTm[parentIdx][3],\
-      character.fullObject->skeleton->globalTm[i][3], /*vec3(0, 0.3f, 0.5f)*/get_random_color(i), 0.01f);
+      draw_arrow(character.fullObject->skeleton.globalTm[parentIdx][3],\
+      character.fullObject->skeleton.globalTm[i][3], /*vec3(0, 0.3f, 0.5f)*/get_random_color(i), 0.01f);
     }
   }
 

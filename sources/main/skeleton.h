@@ -16,10 +16,19 @@ public:
   std::vector<std::string> names;
 
   int totalNodeCount = 0;
-
-  void UpdateTransform();
 };
 
-using SkeletonPtr = std::shared_ptr<Skeleton>;
+using SkeletonPtr = std::shared_ptr<const Skeleton>;
 
 SkeletonPtr makeSkeleton(const aiNode* curNode);
+
+class RuntimeSkeleton
+{
+public:
+  SkeletonPtr baseSkeleton;
+  std::vector<glm::mat4> localTm;
+  std::vector<glm::mat4> globalTm;
+  RuntimeSkeleton(SkeletonPtr ref) : baseSkeleton(ref), localTm(ref->localTm), globalTm(ref->totalNodeCount) {}
+
+  void updateLocalTransforms();
+};
