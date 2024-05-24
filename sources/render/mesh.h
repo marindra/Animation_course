@@ -12,14 +12,8 @@ struct Mesh
   const uint32_t vertexArrayBufferObject;
   const int numIndices;
 
-  struct Bone
-  {
-    std::string name;
-    glm::mat4x4 bindPose, invBindPose;
-    int parentId;
-  };
-
-  std::vector<Bone> bones;
+  std::vector<mat4x4> invBindPoses;
+  std::map<std::string, int> mapOfNameInd;
 
   Mesh(uint32_t vertexArrayBufferObject, int numIndices) :
     vertexArrayBufferObject(vertexArrayBufferObject),

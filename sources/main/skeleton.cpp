@@ -15,6 +15,7 @@ static void iterate_over_tree(int parent_idx,const aiNode *node, Skeleton &skele
   skeleton.mapOfNameInd.emplace(node->mName.C_Str(), nodeInd);
   skeleton.parentInd.emplace_back(parent_idx);
   skeleton.localTm.emplace_back(localTm);
+  skeleton.names.emplace_back(node->mName.C_Str());
 
   for (size_t i = 0; i < node->mNumChildren; i++)
   {

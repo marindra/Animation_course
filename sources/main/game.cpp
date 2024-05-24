@@ -190,6 +190,9 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
   const Material &material = *character.material;
   const Shader &shader = material.get_shader();
 
+  size_t meshBoneCount = character.fullObject->mesh->invBindPoses.size();
+  std::vector<mat4> bones(meshBoneCount);
+
   shader.use();
   material.bind_uniforms_to_shader();
   //shader.set_mat4x4("Bones", {});
@@ -214,6 +217,19 @@ void render_character(const Character &character, const mat4 &cameraProjView, ve
     //}
   //}
   //printf("\n\n");
+
+  for (int i = 0; i < character.fullObject->skeleton->totalNodeCount; ++i)
+  {
+    const auto& it = character.fullObject->mesh->mapOfNameInd.find(character.fullObject->skeleton->names[i]);
+    if (it != character.fullObject->mesh->mapOfNameInd.end())
+    {
+      int boneIdx = it->second;
+      bones[boneIdx] = character.fullObject->skeleton->globalTm[i] * character.fullObject->mesh->invBindPoses[boneIdx];
+    }
+  }
+  shader.set_mat4x4("Bones", bones);
+
+  render(character.fullObject->mesh);
 
   for (int i = 0; i < character.fullObject->skeleton->totalNodeCount; ++i)
   {

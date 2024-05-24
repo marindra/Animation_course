@@ -35,9 +35,17 @@ vec3 get_random_color(uint x)
 
 void main()
 {
+  mat4 BoneTransform = mat4(0);
 
-  vec3 VertexPosition = (Transform * vec4(Position, 1)).xyz;
-  vsOutput.EyespaceNormal = (Transform * vec4(Normal, 0)).xyz;
+  for (int  i = 0; i < 4; i++)
+    BoneTransform += Bones[BoneIndex[i]] * BoneWeights[i];
+
+  BoneTransform = Transform * BoneTransform;
+  vec3 VertexPosition = (BoneTransform * vec4(Position, 1)).xyz;
+
+  vsOutput.EyespaceNormal = normalize((BoneTransform * vec4(Normal, 0)).xyz);
+  //vec3 VertexPosition = (Transform * vec4(Position, 1)).xyz;
+  //vsOutput.EyespaceNormal = (Transform * vec4(Normal, 0)).xyz;
 
   gl_Position = ViewProjection * vec4(VertexPosition, 1);
   vsOutput.WorldPosition = VertexPosition;

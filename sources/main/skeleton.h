@@ -13,6 +13,7 @@ public:
   std::vector<glm::mat4x4> globalTm;
   std::vector<int> parentInd;
   std::map<std::string, int> mapOfNameInd;
+  std::vector<std::string> names;
 
   int totalNodeCount = 0;
 

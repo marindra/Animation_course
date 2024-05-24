@@ -134,9 +134,9 @@ MeshPtr create_mesh(const aiMesh *mesh)
   if (mesh->HasBones())
   {
     int numBones = mesh->mNumBones;
-    meshPtr->bones.resize(numBones);
+    meshPtr->invBindPoses.resize(numBones);
 
-    std::map<std::string, int> mapOfNameInd;
+    //std::map<std::string, int> mapOfNameInd;
 
     for (int i = 0; i < numBones; i++)
     {
@@ -149,18 +149,18 @@ MeshPtr create_mesh(const aiMesh *mesh)
       //glm::mat4x4 mTransformation = glm::make_mat4x4(&bone->mNode->mTransformation.a1);
       glm::mat4x4 mOffsetMatrix = glm::make_mat4x4(&bone->mOffsetMatrix.a1);
       mOffsetMatrix = glm::transpose(mOffsetMatrix);
-      meshPtr->bones[i].invBindPose = mOffsetMatrix;
-      meshPtr->bones[i].bindPose = glm::inverse(mOffsetMatrix);
-      meshPtr->bones[i].name = bone->mName.C_Str();
+      meshPtr->invBindPoses[i] = mOffsetMatrix;
+      //meshPtr->bindPoses[i] = glm::inverse(mOffsetMatrix);
+      //meshPtr->bones[i].name = bone->mName.C_Str();
 
-      mapOfNameInd[std::string(bone->mName.C_Str())] = i;
+      meshPtr->mapOfNameInd[std::string(bone->mName.C_Str())] = i;
     }
 
-    for (int i = 0; i < numBones; i++)
+    /*for (int i = 0; i < numBones; i++)
     {
       const aiNode *parentNode = mesh->mBones[i]->mNode->mParent;
       meshPtr->bones[i].parentId = parentNode == nullptr ? -1 : mapOfNameInd[std::string(parentNode->mName.C_Str())];
-    }
+    }*/
   }
 
   return meshPtr;
