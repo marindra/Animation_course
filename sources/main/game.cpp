@@ -54,6 +54,10 @@ struct Character
 
   // Buffer of model space matrices.
   ozz::vector<ozz::math::Float4x4> models_;
+
+  bool animPaused = false;
+  bool animLooped = false;
+  float animSpeed = 1.0f;
 };
 
 struct Scene
@@ -174,8 +178,8 @@ void game_update()
     if (character.animation_)
     {
       //controller_.Update(animation_, _dt);
-      character.animTime += get_delta_time();
-      if (character.animTime >= character.animation_->duration())
+      character.animTime += get_delta_time() * float(!character.animPaused) * character.animSpeed;
+      if (character.animLooped && character.animTime >= character.animation_->duration())
       {
         character.animTime = 0;
       }
@@ -266,6 +270,7 @@ void imgui_render()
       //  ImGui::Text("%d) %s", int(i), skeleton.ref->names[i].c_str());
       //}
     }
+    ImGui::End();
 
     if (ImGui::Begin("Animation list"))
     {
@@ -291,10 +296,18 @@ void imgui_render()
         character.animTime = 0;
       }
     }
+    ImGui::End();
     //character.skeleton.updateLocalTransforms();
     //character.fullObject->skeleton.updateLocalTransforms();
     //const RuntimeSkeleton &skeleton = character.skeleton;
-    
+
+    if (ImGui::Begin("Settings"))
+    {
+      ImGui::Checkbox("Paused", &character.animPaused);
+      ImGui::SameLine();
+      ImGui::Checkbox("Loop", &character.animLooped);
+      ImGui::SliderFloat("Speed", &character.animSpeed, 0.1f, 5.0f);
+    }
     ImGui::End();
 
     static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
