@@ -3,7 +3,10 @@
 #include <assimp/postprocess.h>
 #include <log.h>
 
-SceneAssetPtr makeScene(const char *path, int idx)
+SkeletonPtr create_skeleton(const aiNode &ai_node);
+AnimationPtr create_animation(const aiAnimation &ai_animation, const SkeletonPtr &skeleton);
+
+SceneAssetPtr makeScene(const char *path, int load_flags)
 {
   Assimp::Importer importer;
   importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
@@ -19,9 +22,26 @@ SceneAssetPtr makeScene(const char *path, int idx)
     return nullptr;
   }
 
-  MeshPtr curMesh = create_mesh(scene->mMeshes[idx]);
-  RuntimeSkeleton curSkeleton = RuntimeSkeleton(makeSkeleton(scene->mRootNode));
+  SceneAsset curScene;
+  if (load_flags & SceneAsset::LoadScene::Meshes)
+  {
+    curScene.meshes.reserve(scene->mNumMeshes);
+    for (size_t i = 0; i < scene->mNumMeshes; i++)
+      curScene.meshes.emplace_back(create_mesh(scene->mMeshes[i]));
+  }
+  if (load_flags & SceneAsset::LoadScene::Skeleton)
+  {
+  curScene.skeleton = create_skeleton(*scene->mRootNode);
+  }
+  if (load_flags & SceneAsset::LoadScene::Animation)
+  {
+    curScene.animations.reserve(scene->mNumAnimations);
+    for (size_t i = 0; i < scene->mNumAnimations; i++)
+      if (AnimationPtr animation = create_animation(*scene->mAnimations[i], curScene.skeleton))
+        curScene.animations.emplace_back(std::move(animation));
+  }
+  //MeshPtr curMesh = create_mesh(scene->mMeshes[idx]);
+  //SkeletonPtr curSkeleton = RuntimeSkeleton(makeSkeleton(scene->mRootNode));
   importer.FreeScene();
-  SceneAsset curScene{std::move(curMesh), std::move(curSkeleton)};
   return std::make_shared<SceneAsset>(std::move(curScene));
 }
