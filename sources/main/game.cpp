@@ -58,6 +58,10 @@ struct Character
   bool animPaused = false;
   bool animLooped = false;
   float animSpeed = 1.0f;
+
+  unsigned int rawSize = 0;
+  unsigned int finalSize = 0;
+  unsigned int optimizedSize = 0;
 };
 
 struct Scene
@@ -246,6 +250,7 @@ void imgui_render()
 {
   ImGuizmo::BeginFrame();
   static size_t idx = 3;
+  static AnimationInfo animInfo;
   for (Character &character : scene->characters)
   {
     if (ImGui::Begin("Skeleton view"))
@@ -272,13 +277,13 @@ void imgui_render()
     }
     ImGui::End();
 
+    static int item = 0;
+    std::vector<const char *> animations(animationList.size() + 1);
     if (ImGui::Begin("Animation list"))
     {
-      std::vector<const char *> animations(animationList.size() + 1);
       animations[0] = "None";
       for (size_t i = 0; i < animationList.size(); i++)
         animations[i + 1] = animationList[i].c_str();
-      static int item = 0;
       if (ImGui::Combo(animations[item], &item, animations.data(), animations.size()))
       {
         //makeScene(animations[item], SceneAsset::LoadScene::Skeleton | SceneAsset::LoadScene::Animation);
@@ -286,7 +291,7 @@ void imgui_render()
 
         if (item > 0)
         {
-          SceneAssetPtr curScene = makeScene(animations[item], SceneAsset::LoadScene::Skeleton | SceneAsset::LoadScene::Animation);
+          SceneAssetPtr curScene = makeScene(animations[item], SceneAsset::LoadScene::Skeleton | SceneAsset::LoadScene::Animation, &animInfo);
           if (!curScene->animations.empty())
           {
             animation = curScene->animations[0];
@@ -307,6 +312,33 @@ void imgui_render()
       ImGui::SameLine();
       ImGui::Checkbox("Loop", &character.animLooped);
       ImGui::SliderFloat("Speed", &character.animSpeed, 0.1f, 5.0f);
+      if (animInfo.rawSize > 0)
+      {
+        ImGui::Text("");
+        ImGui::Text("Optimization settings");
+        if (ImGui::Checkbox("Optimize", &animInfo.needToOptimize) || ImGui::SliderFloat("Tolerance", &animInfo.tolerance, 1e-4f, 1.f)\
+          || ImGui::SliderFloat("Distance", &animInfo.distance, 1e-4f, 1.f))
+        {
+          AnimationPtr animation;
+
+          if (item > 0)
+          {
+            SceneAssetPtr curScene = makeScene(animations[item], SceneAsset::LoadScene::Skeleton | SceneAsset::LoadScene::Animation, &animInfo);
+            if (!curScene->animations.empty())
+              {
+                animation = curScene->animations[0];
+              }
+            }
+          character.animation_ = animation;
+          character.animTime = 0;
+        }
+        ImGui::Text("Raw size: %d", animInfo.rawSize);
+        ImGui::Text("Final size: %d", animInfo.finalSize);
+        if (animInfo.optimizedSize > 0)
+        {
+          ImGui::Text("Optimized size: %d", animInfo.optimizedSize);
+        }
+      }
     }
     ImGui::End();
 

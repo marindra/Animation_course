@@ -1,5 +1,6 @@
 #pragma once
 #include <render/mesh.h>
+#include <render/animation.h>
 
 namespace ozz
 {
@@ -30,4 +31,4 @@ struct SceneAsset
 
 using SceneAssetPtr = std::shared_ptr<SceneAsset>;
 
-SceneAssetPtr makeScene(const char *path, int idx);
+SceneAssetPtr makeScene(const char *path, int idx, AnimationInfo* animInfo = nullptr);

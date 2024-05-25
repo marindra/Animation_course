@@ -1,6 +1,7 @@
 #include <assimp/scene.h>
 #include <main/scene.h>
 #include <log.h>
+#include "animation.h"
 
 #include "ozz/animation/offline/raw_skeleton.h"
 #include "ozz/animation/offline/skeleton_builder.h"
@@ -83,7 +84,7 @@ SkeletonPtr create_skeleton(const aiNode &ai_root)
   return std::shared_ptr<ozz::animation::Skeleton>(std::move(skeleton));
 }
 
-AnimationPtr create_animation(const aiAnimation &ai_animation, const SkeletonPtr &skeleton)
+AnimationPtr create_animation(const aiAnimation &ai_animation, const SkeletonPtr &skeleton, AnimationInfo* animInfo)
 {
 // Creates a RawAnimation.
   ozz::animation::offline::RawAnimation raw_animation;
@@ -184,6 +185,34 @@ AnimationPtr create_animation(const aiAnimation &ai_animation, const SkeletonPtr
   // a new runtime animation instance.
   // This operation will fail and return an empty unique_ptr if the RawAnimation
   // isn't valid.
+
+  if (animInfo != nullptr)
+  {
+    if (animInfo->needToOptimize)
+    {
+      ozz::animation::offline::AnimationOptimizer optimizer;
+      ozz::animation::offline::RawAnimation optimizedRawAnimation;
+
+      optimizer.setting.distance = animInfo->distance;
+      optimizer.setting.tolerance = animInfo->tolerance;
+
+      if (optimizer(raw_animation, *skeleton, &optimizedRawAnimation))
+      {
+        ozz::unique_ptr<ozz::animation::Animation> animation = builder(optimizedRawAnimation);
+        animInfo->rawSize = raw_animation.size();
+        animInfo->finalSize = animation->size();
+        animInfo->optimizedSize = optimizedRawAnimation.size();
+        return std::shared_ptr<ozz::animation::Animation>(std::move(animation));
+      }
+    }
+
+    ozz::unique_ptr<ozz::animation::Animation> animation = builder(raw_animation);
+    animInfo->rawSize = raw_animation.size();
+    animInfo->finalSize = animation->size();
+    animInfo->optimizedSize = 0;
+    return std::shared_ptr<ozz::animation::Animation>(std::move(animation));
+  }
+
   ozz::unique_ptr<ozz::animation::Animation> animation = builder(raw_animation);
 
   // ...use the animation as you want...
